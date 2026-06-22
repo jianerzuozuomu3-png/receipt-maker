@@ -1040,6 +1040,19 @@
     const { jsPDF } = window.jspdf;
     const node = el("receipt");
     const wrap = el("receiptScaleWrap");
+    const previewPanel = el("panelPreview");
+
+    // モバイルで「入力」タブを表示中だと、プレビューは display:none になっており
+    // html2canvasが正しく撮影できない(サイズ0になる)ため、一時的に表示状態にする。
+    const wasHiddenMobile = previewPanel.classList.contains("hidden-mobile");
+    if(wasHiddenMobile){
+      previewPanel.classList.remove("hidden-mobile");
+      previewPanel.style.position = "fixed";
+      previewPanel.style.left = "-9999px";
+      previewPanel.style.top = "0";
+      previewPanel.style.width = "640px";
+      previewPanel.style.visibility = "visible";
+    }
 
     const prevTransform = wrap.style.transform;
     wrap.style.transform = "none";
@@ -1049,14 +1062,25 @@
     }
     await new Promise(r=>setTimeout(r, 60));
 
-    const canvas = await html2canvas(node, {
-      scale: 2.5,
-      backgroundColor: "#ffffff",
-      useCORS: true,
-      logging: false
-    });
-
-    wrap.style.transform = prevTransform;
+    let canvas;
+    try{
+      canvas = await html2canvas(node, {
+        scale: window.devicePixelRatio && window.devicePixelRatio > 1 ? 2 : 2.5,
+        backgroundColor: "#ffffff",
+        useCORS: true,
+        logging: false
+      });
+    } finally {
+      wrap.style.transform = prevTransform;
+      if(wasHiddenMobile){
+        previewPanel.classList.add("hidden-mobile");
+        previewPanel.style.position = "";
+        previewPanel.style.left = "";
+        previewPanel.style.top = "";
+        previewPanel.style.width = "";
+        previewPanel.style.visibility = "";
+      }
+    }
 
     const imgData = canvas.toDataURL("image/png");
     const pdf = new jsPDF({ unit:"pt", format:"a4" });
@@ -1075,7 +1099,20 @@
     pdf.addImage(imgData, "PNG", x, y, renderWidth, renderHeight);
 
     const fname = buildFileName();
-    pdf.save(fname);
+
+    // 一部のAndroid Chromeでは pdf.save() の自動ダウンロードが効かないことがあるため、
+    // Blob URL + <a download> による手動トリガーにフォールバックする。
+    try{
+      pdf.save(fname);
+    }catch(e){
+      const blobUrl = pdf.output("bloburl");
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = fname;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
   }
 
   function buildFileName(){
