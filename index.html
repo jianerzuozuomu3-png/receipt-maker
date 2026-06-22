@@ -283,12 +283,13 @@
 
   #receipt{
     width:600px;
-    min-height:780px;
+    min-height:0;
     background:var(--white);
     box-shadow:var(--shadow);
     position:relative;
-    padding:48px 52px 44px;
+    padding:40px 48px 36px;
     font-family:'Noto Sans JP',sans-serif;
+    font-size:13px;
     color:var(--ink);
     flex-shrink:0;
   }
@@ -302,15 +303,15 @@
     text-align:center;
     font-family:'Zen Kaku Gothic New', sans-serif;
     font-weight:700;
-    font-size:30px;
+    font-size:24px;
     letter-spacing:0.5em;
     padding-left:0.5em;
     color:var(--navy);
-    margin:8px 0 26px;
+    margin:0 0 14px;
   }
   .r-top{
     display:flex;justify-content:space-between;align-items:flex-start;
-    margin-bottom:18px;
+    margin-bottom:10px;
   }
   .r-meta-left{font-size:13px;line-height:1.5;}
   .r-meta-left .num{color:var(--muted);font-size:11.5px;margin-bottom:4px;}
@@ -318,22 +319,22 @@
 
   .r-to{
     font-family:'Noto Serif JP',serif;
-    font-size:20px;
+    font-size:18px;
     border-bottom:1.5px solid var(--ink);
-    padding-bottom:8px;
-    margin-bottom:22px;
-    min-height:28px;
+    padding-bottom:6px;
+    margin-bottom:14px;
+    min-height:24px;
   }
   .r-to .sama{font-size:14px;font-family:'Noto Sans JP',sans-serif;margin-left:6px;color:var(--muted);}
 
   .r-amount-box{
     border:2px solid var(--navy);
     border-radius:4px;
-    padding:14px 18px;
+    padding:10px 16px;
     display:flex;
     align-items:baseline;
     justify-content:space-between;
-    margin-bottom:26px;
+    margin-bottom:16px;
     background:#F7F9FB;
   }
   .r-amount-box .label{
@@ -341,19 +342,19 @@
   }
   .r-amount-box .yen{
     font-family:'Noto Serif JP',serif;
-    font-size:30px;font-weight:700;color:var(--navy);
+    font-size:26px;font-weight:700;color:var(--navy);
     font-variant-numeric:tabular-nums;
   }
   .r-amount-box .yen sup{font-size:14px;font-weight:500;margin-left:4px;}
 
   .r-desc{
-    font-size:13px;color:var(--muted);margin-bottom:6px;
+    font-size:13px;color:var(--muted);margin-bottom:4px;
   }
   .r-desc-value{
     font-size:14px;
     border-bottom:1px dotted var(--line);
-    padding-bottom:10px;
-    margin-bottom:18px;
+    padding-bottom:6px;
+    margin-bottom:10px;
     min-height:20px;
   }
 
@@ -365,30 +366,30 @@
     color:var(--navy);
     font-weight:700;
     text-align:left;
-    padding:8px 6px;
+    padding:5px 6px;
     border-bottom:1.5px solid var(--navy);
     font-size:11.5px;
     letter-spacing:0.04em;
   }
   table.r-table th.num{text-align:right;}
   table.r-table td{
-    padding:7px 6px;
+    padding:5px 6px;
     border-bottom:1px solid var(--line);
   }
   table.r-table td.num{text-align:right;font-variant-numeric:tabular-nums;}
 
   .r-totals{
-    margin-top:8px;
+    margin-top:4px;
     margin-left:auto;
     width:240px;
   }
   .r-totals .line{
     display:flex;justify-content:space-between;
-    font-size:13px;padding:4px 0;
+    font-size:13px;padding:3px 0;
   }
   .r-totals .line.grand{
     border-top:1.5px solid var(--ink);
-    margin-top:4px;padding-top:8px;
+    margin-top:2px;padding-top:6px;
     font-weight:700;font-size:15px;
     color:var(--navy);
   }
@@ -396,8 +397,8 @@
 
   .r-foot{
     display:flex;justify-content:space-between;align-items:flex-end;
-    margin-top:34px;
-    padding-top:18px;
+    margin-top:18px;
+    padding-top:12px;
     border-top:1px solid var(--line);
   }
   .r-issuer{
@@ -407,14 +408,14 @@
   .r-issuer .name{font-weight:700;font-size:14px;margin-bottom:3px;display:block;}
 
   .seal{
-    width:74px;height:74px;
+    width:60px;height:60px;
     border:2.5px solid var(--seal);
     border-radius:50%;
     color:var(--seal);
     display:flex;align-items:center;justify-content:center;
     font-family:'Noto Serif JP',serif;
     font-weight:700;
-    font-size:13px;
+    font-size:11px;
     line-height:1.3;
     text-align:center;
     transform:rotate(-8deg);
@@ -427,7 +428,7 @@
   }
   .seal.show{opacity:0.88;transform:rotate(-8deg) scale(1);}
 
-  .r-note-label{font-size:10.5px;color:var(--muted);margin-top:14px;}
+  .r-note-label{font-size:10.5px;color:var(--muted);margin-top:8px;}
 
   @media (max-width:900px){
     .layout{grid-template-columns:1fr;}
@@ -436,8 +437,8 @@
     .preview-section.hidden-mobile{display:none;}
     .preview-wrap{position:static;}
     .receipt-stage{padding:20px 8px;}
-    #receipt{width:100%;max-width:600px;padding:30px 22px 28px;}
-    .r-title{font-size:22px;letter-spacing:0.35em;}
+    #receipt{width:100%;max-width:600px;padding:26px 20px 24px;}
+    .r-title{font-size:20px;letter-spacing:0.35em;}
     .topbar{margin-bottom:14px;}
   }
 
@@ -488,68 +489,9 @@
     #receipt{
       width:100% !important;
       max-width:170mm !important;
-      min-height:0 !important;
       box-shadow:none !important;
-      padding:0 !important;
       margin:0 auto;
       page-break-inside:avoid;
-      font-size:13px;
-    }
-    #receipt .r-title{
-      font-size:24px !important;
-      margin:0 0 14px !important;
-    }
-    #receipt .r-top{
-      margin-bottom:10px !important;
-    }
-    #receipt .r-to{
-      margin-bottom:14px !important;
-      padding-bottom:6px !important;
-      font-size:18px !important;
-    }
-    #receipt .r-amount-box{
-      padding:10px 16px !important;
-      margin-bottom:16px !important;
-    }
-    #receipt .r-amount-box .yen{
-      font-size:26px !important;
-    }
-    #receipt .r-desc{
-      margin-bottom:4px !important;
-    }
-    #receipt .r-desc-value{
-      margin-bottom:10px !important;
-      padding-bottom:6px !important;
-      min-height:auto !important;
-    }
-    #receipt table.r-table th,
-    #receipt table.r-table td{
-      padding:5px 6px !important;
-    }
-    #receipt .r-totals{
-      margin-top:4px !important;
-    }
-    #receipt .r-totals .line{
-      padding:3px 0 !important;
-    }
-    #receipt .r-totals .line.grand{
-      padding-top:6px !important;
-      margin-top:2px !important;
-    }
-    #receipt .r-foot{
-      margin-top:18px !important;
-      padding-top:12px !important;
-    }
-    #receipt .seal{
-      width:60px !important;
-      height:60px !important;
-      font-size:11px !important;
-    }
-    #receipt .r-note-label{
-      margin-top:8px !important;
-    }
-    .seal{
-      opacity:0.88 !important;
     }
     .seal:not(.show){
       display:none !important;
