@@ -14,8 +14,7 @@
 <title>領収証メーカー</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=Zen+Kaku+Gothic+New:wght@500;700&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
 <style>
   :root{
     --paper:#FAF8F3;
@@ -216,6 +215,15 @@
   .actions.actions-file .btn{
     font-size:13px;
     padding:11px 10px;
+  }
+  .pdf-hint{
+    font-size:11.5px;
+    color:var(--muted);
+    line-height:1.5;
+    margin:8px 2px 0;
+  }
+  .pdf-hint strong{
+    color:var(--navy-2);
   }
   .btn{
     flex:1;
@@ -432,6 +440,121 @@
     .r-title{font-size:22px;letter-spacing:0.35em;}
     .topbar{margin-bottom:14px;}
   }
+
+  /* ---------- 印刷(PDF保存)専用スタイル ----------
+     画面サイズやタブの開閉状態に関係なく、領収証だけを綺麗にA4 1枚へ出力する */
+  @media print{
+    @page{
+      size: A4;
+      margin: 10mm;
+    }
+    html, body{
+      background:#fff !important;
+      margin:0;
+      padding:0;
+    }
+    /* 領収証以外をすべて非表示にする */
+    .topbar,
+    .tabs,
+    .panel-form,
+    .preview-toolbar,
+    .new-link{
+      display:none !important;
+    }
+    .app{
+      max-width:none;
+      padding:0;
+      margin:0;
+    }
+    .layout{
+      display:block;
+    }
+    .preview-section,
+    .preview-section.hidden-mobile{
+      display:block !important;
+    }
+    .preview-wrap{
+      position:static !important;
+    }
+    .receipt-stage{
+      background:#fff !important;
+      padding:0 !important;
+      display:block !important;
+      overflow:visible !important;
+    }
+    #receiptScaleWrap{
+      transform:none !important;
+    }
+    #receipt{
+      width:100% !important;
+      max-width:170mm !important;
+      min-height:0 !important;
+      box-shadow:none !important;
+      padding:0 !important;
+      margin:0 auto;
+      page-break-inside:avoid;
+      font-size:13px;
+    }
+    #receipt .r-title{
+      font-size:24px !important;
+      margin:0 0 14px !important;
+    }
+    #receipt .r-top{
+      margin-bottom:10px !important;
+    }
+    #receipt .r-to{
+      margin-bottom:14px !important;
+      padding-bottom:6px !important;
+      font-size:18px !important;
+    }
+    #receipt .r-amount-box{
+      padding:10px 16px !important;
+      margin-bottom:16px !important;
+    }
+    #receipt .r-amount-box .yen{
+      font-size:26px !important;
+    }
+    #receipt .r-desc{
+      margin-bottom:4px !important;
+    }
+    #receipt .r-desc-value{
+      margin-bottom:10px !important;
+      padding-bottom:6px !important;
+      min-height:auto !important;
+    }
+    #receipt table.r-table th,
+    #receipt table.r-table td{
+      padding:5px 6px !important;
+    }
+    #receipt .r-totals{
+      margin-top:4px !important;
+    }
+    #receipt .r-totals .line{
+      padding:3px 0 !important;
+    }
+    #receipt .r-totals .line.grand{
+      padding-top:6px !important;
+      margin-top:2px !important;
+    }
+    #receipt .r-foot{
+      margin-top:18px !important;
+      padding-top:12px !important;
+    }
+    #receipt .seal{
+      width:60px !important;
+      height:60px !important;
+      font-size:11px !important;
+    }
+    #receipt .r-note-label{
+      margin-top:8px !important;
+    }
+    .seal{
+      opacity:0.88 !important;
+    }
+    .seal:not(.show){
+      display:none !important;
+    }
+  }
 </style>
 </head>
 <body>
@@ -524,6 +647,7 @@
         <button class="btn btn-ghost" id="resetBtn">クリア</button>
         <button class="btn btn-primary" id="pdfBtn">PDFで保存</button>
       </div>
+      <p class="pdf-hint">印刷画面が開きます。「プリンター」または「送信先」の項目で<strong>「PDFに保存」</strong>を選んで保存してください。</p>
       <div class="actions actions-file">
         <button class="btn btn-ghost" id="saveFileBtn">📁 ファイルに保存</button>
         <button class="btn btn-ghost" id="loadFileBtn">📂 ファイルを開く</button>
@@ -1019,100 +1143,28 @@
   el("zoomIn").addEventListener("click", ()=>{ zoom = Math.min(1.4, zoom+0.1); applyZoom(); });
   el("zoomOut").addEventListener("click", ()=>{ zoom = Math.max(0.5, zoom-0.1); applyZoom(); });
 
-  // ---------- PDF export ----------
-  el("pdfBtn").addEventListener("click", async ()=>{
-    const btn = el("pdfBtn");
-    const originalLabel = btn.textContent;
-    btn.disabled = true;
-    btn.textContent = "PDFを作成中…";
-    try{
-      await exportPdf();
-    } catch(err){
-      alert("PDFの作成に失敗しました。お手数ですがもう一度お試しください。");
-      console.error(err);
-    } finally {
-      btn.disabled = false;
-      btn.textContent = originalLabel;
-    }
+  // ---------- PDF export (ブラウザの印刷機能を利用) ----------
+  el("pdfBtn").addEventListener("click", ()=>{
+    printReceipt();
   });
 
-  async function exportPdf(){
-    const { jsPDF } = window.jspdf;
-    const node = el("receipt");
-    const wrap = el("receiptScaleWrap");
-    const previewPanel = el("panelPreview");
+  function printReceipt(){
+    // 印刷ダイアログでファイル名の候補として使われるよう、タイトルを一時的に変更する
+    const originalTitle = document.title;
+    document.title = buildFileName().replace(/\.pdf$/,"");
 
-    // モバイルで「入力」タブを表示中だと、プレビューは display:none になっており
-    // html2canvasが正しく撮影できない(サイズ0になる)ため、一時的に表示状態にする。
-    const wasHiddenMobile = previewPanel.classList.contains("hidden-mobile");
-    if(wasHiddenMobile){
-      previewPanel.classList.remove("hidden-mobile");
-      previewPanel.style.position = "fixed";
-      previewPanel.style.left = "-9999px";
-      previewPanel.style.top = "0";
-      previewPanel.style.width = "640px";
-      previewPanel.style.visibility = "visible";
+    // 印刷後にタイトルを元に戻す(ブラウザによってはafterprintが発火しないため保険でタイマーも併用)
+    let restored = false;
+    function restoreTitle(){
+      if(restored) return;
+      restored = true;
+      document.title = originalTitle;
+      window.removeEventListener("afterprint", restoreTitle);
     }
+    window.addEventListener("afterprint", restoreTitle);
+    setTimeout(restoreTitle, 5000);
 
-    const prevTransform = wrap.style.transform;
-    wrap.style.transform = "none";
-
-    if(document.fonts && document.fonts.ready){
-      try{ await document.fonts.ready; }catch(e){}
-    }
-    await new Promise(r=>setTimeout(r, 60));
-
-    let canvas;
-    try{
-      canvas = await html2canvas(node, {
-        scale: window.devicePixelRatio && window.devicePixelRatio > 1 ? 2 : 2.5,
-        backgroundColor: "#ffffff",
-        useCORS: true,
-        logging: false
-      });
-    } finally {
-      wrap.style.transform = prevTransform;
-      if(wasHiddenMobile){
-        previewPanel.classList.add("hidden-mobile");
-        previewPanel.style.position = "";
-        previewPanel.style.left = "";
-        previewPanel.style.top = "";
-        previewPanel.style.width = "";
-        previewPanel.style.visibility = "";
-      }
-    }
-
-    const imgData = canvas.toDataURL("image/png");
-    const pdf = new jsPDF({ unit:"pt", format:"a4" });
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    const pageHeight = pdf.internal.pageSize.getHeight();
-
-    const imgRatio = canvas.height / canvas.width;
-    let renderWidth = pageWidth - 80;
-    let renderHeight = renderWidth * imgRatio;
-    if(renderHeight > pageHeight - 80){
-      renderHeight = pageHeight - 80;
-      renderWidth = renderHeight / imgRatio;
-    }
-    const x = (pageWidth - renderWidth)/2;
-    const y = 40;
-    pdf.addImage(imgData, "PNG", x, y, renderWidth, renderHeight);
-
-    const fname = buildFileName();
-
-    // 一部のAndroid Chromeでは pdf.save() の自動ダウンロードが効かないことがあるため、
-    // Blob URL + <a download> による手動トリガーにフォールバックする。
-    try{
-      pdf.save(fname);
-    }catch(e){
-      const blobUrl = pdf.output("bloburl");
-      const a = document.createElement("a");
-      a.href = blobUrl;
-      a.download = fname;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-    }
+    window.print();
   }
 
   function buildFileName(){
