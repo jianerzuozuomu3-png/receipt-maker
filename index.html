@@ -154,7 +154,8 @@
     border-color:var(--navy-2);
     background:var(--white);
   }
-  .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;min-width:0;}
+  .row2 .field{min-width:0;}
   .row3{display:grid;grid-template-columns:1.4fr 0.7fr 0.9fr;gap:8px;}
   .divider{
     border:none;border-top:1px solid var(--line);
@@ -169,8 +170,12 @@
     display:grid;grid-template-columns:1.4fr 0.7fr 0.9fr 28px;gap:8px;
     margin-bottom:8px;
     align-items:center;
+    min-width:0;
   }
-  .item-row input{padding:8px 9px;font-size:13.5px;}
+  .item-row input{padding:8px 9px;font-size:13.5px;min-width:0;width:100%;}
+  .item-row .del-btn{
+    justify-self:end;
+  }
   .item-row .amt{font-variant-numeric:tabular-nums;text-align:right;}
   .del-btn{
     background:none;border:none;color:var(--muted);
@@ -1091,20 +1096,32 @@
   });
 
   function printReceipt(){
-    // 印刷ダイアログでファイル名の候補として使われるよう、タイトルを一時的に変更する
+    // 印刷ダイアログ(PDF保存)でファイル名の候補として使われるよう、タイトルを変更する。
+    // setTimeoutで早めに元へ戻すと、スマホでダイアログを開いたままタイトルが
+    // 「領収証メーカー」に戻ってしまい、それがファイル名候補になってしまうため、
+    // 印刷/共有が完了して画面に戻ってきたタイミングで初めて復元する。
     const originalTitle = document.title;
     document.title = buildFileName().replace(/\.pdf$/,"");
+    const printStartedAt = Date.now();
 
-    // 印刷後にタイトルを元に戻す(ブラウザによってはafterprintが発火しないため保険でタイマーも併用)
     let restored = false;
     function restoreTitle(){
       if(restored) return;
+      // print()呼び出し直後にも一瞬 focus/visibilitychange が発火する環境があるため、
+      // ダイアログが開くまでの猶予(600ms)を設けて誤って即時復元しないようにする
+      if(Date.now() - printStartedAt < 600) return;
       restored = true;
       document.title = originalTitle;
       window.removeEventListener("afterprint", restoreTitle);
+      window.removeEventListener("focus", restoreTitle);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    }
+    function onVisibilityChange(){
+      if(document.visibilityState === "visible") restoreTitle();
     }
     window.addEventListener("afterprint", restoreTitle);
-    setTimeout(restoreTitle, 5000);
+    window.addEventListener("focus", restoreTitle);
+    document.addEventListener("visibilitychange", onVisibilityChange);
 
     window.print();
   }
