@@ -1,4 +1,4 @@
-const CACHE_NAME = "receipt-maker-cache-v1";
+const CACHE_NAME = "receipt-maker-cache-v2";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -8,14 +8,14 @@ const APP_SHELL = [
 ];
 
 // インストール時にアプリ本体をキャッシュ
+// ※ skipWaiting() はここでは呼ばず、ユーザーが更新を承認したときだけ呼ぶ
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL))
   );
-  self.skipWaiting();
 });
 
-// 古いキャッシュを削除
+// 古いキャッシュを削除し、すべてのクライアントを即時制御下に置く
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
@@ -27,6 +27,13 @@ self.addEventListener("activate", (event) => {
     )
   );
   self.clients.claim();
+});
+
+// アプリからの「今すぐ更新して」メッセージを受けて skipWaiting() を実行
+self.addEventListener("message", (event) => {
+  if (event.data && event.data.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
 });
 
 // fetch: キャッシュを優先しつつ、取得できたら裏でキャッシュを更新する(stale-while-revalidate)
