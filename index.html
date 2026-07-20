@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#1B3A5C">
 <meta name="description" content="領収証を作成してPDFで保存できるアプリ">
 <link rel="manifest" href="manifest.json">
@@ -501,10 +501,206 @@
     .seal:not(.show){
       display:none !important;
     }
+    .seal-image-el{
+      width:60px !important;
+      height:60px !important;
+    }
+  }
+  /* ---------- 更新通知バナー ---------- */
+  #updateBanner{
+    position:fixed;
+    bottom:16px;left:50%;transform:translateX(-50%);
+    background:var(--navy);color:#fff;
+    border-radius:12px;
+    padding:12px 16px;
+    display:flex;align-items:center;gap:12px;
+    font-size:13px;font-family:'Noto Sans JP',sans-serif;
+    box-shadow:0 8px 24px -8px rgba(27,58,92,0.7);
+    z-index:9999;
+    white-space:nowrap;
+  }
+  #updateNowBtn{
+    background:var(--seal);color:#fff;
+    border:none;border-radius:7px;
+    padding:7px 14px;font-size:12.5px;font-weight:700;
+    font-family:'Noto Sans JP',sans-serif;
+    cursor:pointer;
+  }
+  #updateNowBtn:hover{opacity:0.85;}
+  #updateLaterBtn{
+    background:none;border:none;color:rgba(255,255,255,0.7);
+    font-size:16px;cursor:pointer;line-height:1;padding:0 2px;
+  }
+  #updateLaterBtn:hover{color:#fff;}
+  /* ---------- カスタム確認ダイアログ ---------- */
+  #confirmOverlay{
+    position:fixed;inset:0;
+    background:rgba(28,43,54,0.55);
+    display:flex;align-items:center;justify-content:center;
+    z-index:10000;
+    padding:20px;
+  }
+  #confirmBox{
+    background:var(--white);
+    border-radius:16px;
+    padding:28px 28px 22px;
+    max-width:360px;width:100%;
+    box-shadow:0 24px 48px -12px rgba(28,43,54,0.45);
+  }
+  #confirmMsg{
+    font-size:14px;line-height:1.6;
+    color:var(--ink);margin:0 0 20px;
+    white-space:pre-line;
+  }
+  #confirmBtns{display:flex;gap:10px;}
+  #confirmBtns .btn{flex:1;padding:11px;}
+
+  /* ---------- 履歴ボタン ---------- */
+  .btn-history{
+    background:none;border:1px solid var(--line);
+    border-radius:8px;padding:7px 13px;
+    font-size:12.5px;font-weight:700;
+    font-family:'Noto Sans JP',sans-serif;
+    color:var(--navy);cursor:pointer;
+    white-space:nowrap;
+  }
+  .btn-history:hover{background:var(--paper);}
+
+  /* ---------- 履歴パネル ---------- */
+  #historyOverlay{
+    position:fixed;inset:0;background:rgba(28,43,54,0.4);z-index:8000;
+    cursor:pointer;
+  }
+  #historyPanel{
+    position:fixed;top:0;right:0;bottom:0;
+    width:min(380px, 92vw);
+    background:var(--white);
+    box-shadow:-12px 0 40px -10px rgba(28,43,54,0.25);
+    z-index:8001;
+    display:flex;flex-direction:column;
+    transform:translateX(100%);
+    transition:transform .28s cubic-bezier(.4,0,.2,1);
+  }
+  #historyPanel.open{transform:translateX(0);}
+  #historyHeader{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:18px 20px;
+    border-bottom:1px solid var(--line);
+    flex-shrink:0;
+  }
+  .history-title{
+    font-family:'Noto Serif JP',serif;
+    font-size:16px;font-weight:700;color:var(--navy);
+  }
+  #historyCloseBtn{
+    background:none;border:none;font-size:18px;
+    color:var(--muted);cursor:pointer;
+    width:32px;height:32px;border-radius:8px;
+    display:flex;align-items:center;justify-content:center;
+  }
+  #historyCloseBtn:hover{background:var(--paper);}
+  #historyList{
+    overflow-y:auto;flex:1;padding:12px;
+    display:flex;flex-direction:column;gap:8px;
+  }
+  #historyEmpty{
+    padding:40px 20px;text-align:center;
+    font-size:13px;color:var(--muted);line-height:1.7;
+  }
+  .history-item{
+    border:1px solid var(--line);border-radius:10px;
+    padding:12px 14px;cursor:pointer;
+    transition:border-color .15s, background .15s;
+    display:flex;align-items:flex-start;gap:10px;
+  }
+  .history-item:hover{border-color:var(--navy-2);background:#F0F4F8;}
+  .history-item-body{flex:1;min-width:0;}
+  .history-item-client{
+    font-weight:700;font-size:13.5px;color:var(--ink);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .history-item-meta{
+    font-size:11.5px;color:var(--muted);margin-top:3px;
+  }
+  .history-item-amount{
+    font-size:14px;font-weight:700;color:var(--navy);
+    font-variant-numeric:tabular-nums;white-space:nowrap;
+  }
+  .history-item-del{
+    background:none;border:none;color:var(--muted);
+    cursor:pointer;font-size:16px;
+    width:28px;height:28px;border-radius:6px;
+    flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  }
+  .history-item-del:hover{background:#F4E6E3;color:var(--seal);}
+
+  /* ---------- 印鑑画像アップロード ---------- */
+  #sealImageArea{margin-top:8px;}
+  .seal-options{display:flex;gap:16px;margin-bottom:8px;}
+  .seal-opt-label{
+    font-size:12.5px;color:var(--muted);
+    display:flex;align-items:center;gap:5px;cursor:pointer;
+  }
+  .seal-opt-label input{width:auto;}
+  #sealImageUploadArea{
+    border:1px dashed var(--line);border-radius:10px;
+    padding:12px;background:var(--paper);
+    margin-top:4px;
+  }
+  #sealImagePreview{
+    width:80px;height:80px;border-radius:50%;
+    overflow:hidden;margin:0 auto 10px;
+    border:2px solid var(--line);
+    display:flex;align-items:center;justify-content:center;
+    background:var(--white);
+  }
+  #sealImagePreview img{
+    width:100%;height:100%;object-fit:contain;
+  }
+  .seal-upload-btns{display:flex;gap:8px;justify-content:center;}
+  .seal-upload-hint{
+    font-size:11px;color:var(--muted);
+    text-align:center;margin:8px 0 0;line-height:1.5;
+  }
+  /* 印刷時の画像印鑑 */
+  .seal-image-el{
+    width:60px;height:60px;
+    object-fit:contain;
+    transform:rotate(-8deg);
+    flex-shrink:0;
+    margin-left:16px;
+    opacity:0.9;
   }
 </style>
 </head>
 <body>
+
+<div id="updateBanner" style="display:none;" aria-live="polite">
+  <span>🔄 アプリの新しいバージョンがあります</span>
+  <button id="updateNowBtn">今すぐ更新</button>
+  <button id="updateLaterBtn" aria-label="後で">✕</button>
+</div>
+
+<!-- カスタム確認ダイアログ -->
+<div id="confirmOverlay" role="dialog" aria-modal="true" aria-labelledby="confirmMsg" style="display:none;">
+  <div id="confirmBox">
+    <p id="confirmMsg"></p>
+    <div id="confirmBtns">
+      <button id="confirmCancel" class="btn btn-ghost">キャンセル</button>
+      <button id="confirmOk" class="btn btn-primary">OK</button>
+    </div>
+  </div>
+</div>
+<!-- 履歴パネル -->
+<div id="historyOverlay" style="display:none;"></div>
+<div id="historyPanel" aria-label="領収証履歴">
+  <div id="historyHeader">
+    <span class="history-title">発行履歴</span>
+    <button id="historyCloseBtn" aria-label="閉じる">✕</button>
+  </div>
+  <div id="historyList"></div>
+  <p id="historyEmpty" style="display:none;">まだ履歴がありません。<br>PDFで保存すると自動で記録されます。</p>
+</div>
 
 <div class="app">
   <div class="topbar">
@@ -516,6 +712,7 @@
       <span class="dot" id="saveDot"></span>
       <span id="saveText">自動保存ずみ</span>
     </div>
+    <button class="btn-history" id="historyBtn">📋 履歴</button>
   </div>
 
   <div class="tabs">
@@ -551,11 +748,13 @@
       <button class="add-row-btn" id="addItemBtn">＋ 行を追加</button>
 
       <div class="tax-row">
-        <label for="taxRate" style="margin:0;color:var(--muted);">税区分</label>
+        <label for="taxRate" style="margin:0;color:var(--muted);">税区分・入力方式</label>
         <select id="taxRate">
-          <option value="10">10% 対象</option>
-          <option value="8">8% 対象(軽減税率)</option>
-          <option value="0">非課税・税込一括</option>
+          <option value="10_ex">10% 対象（税抜で入力）</option>
+          <option value="10_in">10% 対象（税込で入力）</option>
+          <option value="8_ex">8% 対象・軽減税率（税抜で入力）</option>
+          <option value="8_in">8% 対象・軽減税率（税込で入力）</option>
+          <option value="0">非課税</option>
         </select>
       </div>
 
@@ -587,7 +786,26 @@
       </div>
       <div class="checkbox-line">
         <input type="checkbox" id="showSeal" checked>
-        <label for="showSeal" style="margin:0;">プレビューに角印を表示する</label>
+        <label for="showSeal" style="margin:0;">角印を表示する</label>
+      </div>
+      <div id="sealImageArea">
+        <div class="seal-options">
+          <label class="seal-opt-label">
+            <input type="radio" name="sealType" value="text" checked> テキスト印（自動生成）
+          </label>
+          <label class="seal-opt-label">
+            <input type="radio" name="sealType" value="image"> 画像をアップロード
+          </label>
+        </div>
+        <div id="sealImageUploadArea" style="display:none;">
+          <div id="sealImagePreview"></div>
+          <div class="seal-upload-btns">
+            <button class="btn btn-ghost" id="sealUploadBtn" style="font-size:12px;padding:8px 12px;">📷 画像を選択</button>
+            <button class="btn btn-ghost" id="sealClearBtn" style="font-size:12px;padding:8px 12px;display:none;">🗑 削除</button>
+          </div>
+          <input type="file" id="sealFileInput" accept="image/*" style="display:none;">
+          <p class="seal-upload-hint">PNG/JPG推奨。背景が透明なPNGだときれいに合成されます。</p>
+        </div>
       </div>
 
       <div class="actions">
@@ -678,13 +896,15 @@
     issueDate: todayLocalIso(),
     receiptNo:"",
     items:[ {name:"", price:"", qty:"1"} ],
-    taxRate:"10",
+    taxRate:"10_ex",
     purpose:"",
     issuerName:"",
     issuerAddr:"",
     issuerTel:"",
     issuerReg:"",
-    showSeal:true
+    showSeal:true,
+    sealType:"text",
+    sealImageData:""
   };
 
   let zoom = 1;
@@ -776,7 +996,7 @@
       row.innerHTML = `
         <input type="text" data-field="name" data-idx="${idx}" placeholder="例:コンサルティング費用" value="${escapeAttr(item.name)}">
         <input type="text" data-field="price" data-idx="${idx}" placeholder="0" value="${escapeAttr(item.price)}" inputmode="decimal">
-        <input type="text" data-field="qty" data-idx="${idx}" placeholder="1" value="${escapeAttr(item.qty)}" inputmode="decimal">
+        <input type="text" data-field="qty" data-idx="${idx}" placeholder="1" value="${escapeAttr(item.qty)}" inputmode="decimal" title="小数も入力できます(例: 0.5)">
         <button class="del-btn" data-del="${idx}" title="この行を削除">×</button>
       `;
       itemsContainer.appendChild(row);
@@ -802,26 +1022,53 @@
     el("issuerTel").value = state.issuerTel;
     el("issuerReg").value = state.issuerReg;
     el("showSeal").checked = !!state.showSeal;
+    // 印鑑タイプの復元
+    const sealType = state.sealType || "text";
+    document.querySelectorAll('input[name="sealType"]').forEach(r=>{
+      r.checked = (r.value === sealType);
+    });
+    applySealTypeUI(sealType);
     renderItemsForm();
   }
 
   // ---------- compute ----------
+  // taxRate の値体系:
+  //   "10_ex" = 10%・税抜入力  "10_in" = 10%・税込入力
+  //   "8_ex"  = 8%・税抜入力   "8_in"  = 8%・税込入力
+  //   "0"     = 非課税
+  function parseTaxRate(v){
+    if(!v || v === "0") return {rate:0, inclusive:false};
+    const [rateStr, mode] = v.split("_");
+    return {rate: parseInt(rateStr, 10), inclusive: mode === "in"};
+  }
+
   function computeTotals(){
-    const taxRateNum = toNum(state.taxRate);
-    let subtotal = 0;
+    const {rate, inclusive} = parseTaxRate(state.taxRate);
+    let lineTotal = 0;
     state.items.forEach(it=>{
-      subtotal += toNum(it.price) * (toNum(it.qty) || 0);
+      lineTotal += toNum(it.price) * (toNum(it.qty) || 0);
     });
-    let tax = 0, total = 0;
-    if(taxRateNum > 0){
-      // assume entered prices are tax-exclusive; tax added on top
-      tax = Math.round(subtotal * taxRateNum / 100);
-      total = subtotal + tax;
-    } else {
+
+    let subtotal = 0, tax = 0, total = 0;
+    if(rate === 0){
+      // 非課税: 合計=入力値合計、消費税なし
+      subtotal = lineTotal;
       tax = 0;
-      total = subtotal;
+      total = lineTotal;
+    } else if(inclusive){
+      // 税込入力: 入力値が税込金額。消費税を逆算（切捨て）
+      // 税額 = 税込金額 × 税率 ÷ (100 + 税率)  端数切捨て
+      total = lineTotal;
+      tax = Math.floor(total * rate / (100 + rate));
+      subtotal = total - tax;
+    } else {
+      // 税抜入力: 入力値が税抜金額。消費税を加算（切捨て）
+      // 国税庁ガイドライン: 品目ごとではなく請求書単位での端数処理が一般的
+      subtotal = lineTotal;
+      tax = Math.floor(subtotal * rate / 100);
+      total = subtotal + tax;
     }
-    return {subtotal, tax, total, taxRateNum};
+    return {subtotal, tax, total, rate, inclusive};
   }
 
   // ---------- render preview ----------
@@ -849,19 +1096,28 @@
       tbody.innerHTML = `<tr><td>&nbsp;</td><td class="num"></td><td class="num"></td><td class="num"></td></tr>`;
     }
 
-    const {subtotal, tax, total, taxRateNum} = computeTotals();
+    const {subtotal, tax, total, rate, inclusive} = computeTotals();
     el("pvTotal").textContent = yen(total);
 
     const totalsDiv = el("pvTotals");
-    if(taxRateNum > 0){
-      totalsDiv.innerHTML = `
-        <div class="line"><span>小計</span><span class="num">¥${yen(subtotal)}</span></div>
-        <div class="line"><span>消費税(${taxRateNum}%)</span><span class="num">¥${yen(tax)}</span></div>
-        <div class="line grand"><span>合計</span><span class="num">¥${yen(total)}</span></div>
-      `;
+    if(rate > 0){
+      if(inclusive){
+        // 税込入力: 入力値の合計=税込合計。「うち消費税」を内訳表示
+        totalsDiv.innerHTML = `
+          <div class="line grand"><span>合計(税込)</span><span class="num">¥${yen(total)}</span></div>
+          <div class="line"><span>　うち消費税(${rate}%)</span><span class="num">¥${yen(tax)}</span></div>
+        `;
+      } else {
+        // 税抜入力: 小計(税抜) + 消費税 = 合計
+        totalsDiv.innerHTML = `
+          <div class="line"><span>小計(税抜)</span><span class="num">¥${yen(subtotal)}</span></div>
+          <div class="line"><span>消費税(${rate}%)</span><span class="num">¥${yen(tax)}</span></div>
+          <div class="line grand"><span>合計(税込)</span><span class="num">¥${yen(total)}</span></div>
+        `;
+      }
     } else {
       totalsDiv.innerHTML = `
-        <div class="line grand"><span>合計(税込)</span><span class="num">¥${yen(total)}</span></div>
+        <div class="line grand"><span>合計(非課税)</span><span class="num">¥${yen(total)}</span></div>
       `;
     }
 
@@ -873,13 +1129,32 @@
 
     el("pvRegNote").textContent = state.issuerReg ? `登録番号: ${state.issuerReg}` : "";
 
+    const sealContainer = el("pvSeal").parentElement;
+    // 既存の画像印鑑要素を削除（再レンダリング対応）
+    const existingImgSeal = sealContainer.querySelector(".seal-image-el");
+    if(existingImgSeal) existingImgSeal.remove();
+
     const seal = el("pvSeal");
-    const sealText = (state.issuerName || "印").trim();
-    seal.textContent = sealText.length > 4 ? sealText.slice(0,4) : (sealText || "印");
-    if(state.showSeal && state.issuerName){
-      seal.classList.add("show");
+    const shouldShow = state.showSeal && state.issuerName;
+
+    if(state.sealType === "image" && state.sealImageData && shouldShow){
+      // 画像印鑑
+      seal.style.display = "none";
+      const img = document.createElement("img");
+      img.className = "seal-image-el";
+      img.src = state.sealImageData;
+      img.alt = "印鑑";
+      sealContainer.appendChild(img);
     } else {
-      seal.classList.remove("show");
+      // テキスト印（CSS描画）
+      seal.style.display = "";
+      const sealText = (state.issuerName || "印").trim();
+      seal.textContent = sealText.length > 4 ? sealText.slice(0,4) : (sealText || "印");
+      if(shouldShow){
+        seal.classList.add("show");
+      } else {
+        seal.classList.remove("show");
+      }
     }
   }
 
@@ -906,9 +1181,150 @@
   bindSimpleField("issuerReg","issuerReg");
   el("showSeal").addEventListener("change", e=>{
     state.showSeal = e.target.checked;
+    el("sealImageArea").style.display = state.showSeal ? "" : "none";
     renderAll();
     scheduleSave();
   });
+
+  // ---------- 印鑑タイプ切替 ----------
+  function applySealTypeUI(type){
+    el("sealImageUploadArea").style.display = type === "image" ? "" : "none";
+    // 画像プレビューを更新
+    const prev = el("sealImagePreview");
+    prev.innerHTML = state.sealImageData
+      ? `<img src="${state.sealImageData}" alt="印鑑プレビュー">`
+      : "";
+    el("sealClearBtn").style.display = state.sealImageData ? "" : "none";
+  }
+  document.querySelectorAll('input[name="sealType"]').forEach(radio=>{
+    radio.addEventListener("change", e=>{
+      state.sealType = e.target.value;
+      applySealTypeUI(state.sealType);
+      renderAll();
+      scheduleSave();
+    });
+  });
+  el("sealUploadBtn").addEventListener("click", ()=>{ el("sealFileInput").value=""; el("sealFileInput").click(); });
+  el("sealClearBtn").addEventListener("click", ()=>{
+    state.sealImageData = "";
+    applySealTypeUI(state.sealType);
+    renderAll();
+    scheduleSave();
+  });
+  el("sealFileInput").addEventListener("change", e=>{
+    const file = e.target.files && e.target.files[0];
+    if(!file) return;
+    if(!file.type.startsWith("image/")){
+      alert("画像ファイル(PNG/JPG/GIF)を選んでください。");
+      return;
+    }
+    if(file.size > 2 * 1024 * 1024){
+      alert("ファイルサイズが大きすぎます。2MB以下の画像を選んでください。");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = ev=>{
+      state.sealImageData = ev.target.result;
+      applySealTypeUI(state.sealType);
+      renderAll();
+      scheduleSave();
+    };
+    reader.readAsDataURL(file);
+  });
+  // showSeal初期状態でエリアを制御
+  el("sealImageArea").style.display = state.showSeal ? "" : "none";
+
+  // ---------- 履歴機能 ----------
+  const HISTORY_KEY = "receiptMaker_history_v1";
+  const HISTORY_MAX = 20;
+
+  function loadHistory(){
+    try{ return JSON.parse(localStorage.getItem(HISTORY_KEY)) || []; }
+    catch(e){ return []; }
+  }
+  function saveHistory(list){
+    try{ localStorage.setItem(HISTORY_KEY, JSON.stringify(list)); }catch(e){}
+  }
+  // 現在の領収証を履歴に保存（PDFで保存ボタン押下時に呼ぶ）
+  function pushHistory(){
+    const {total} = computeTotals();
+    if(!state.clientName && total === 0) return; // 空の場合は保存しない
+    const list = loadHistory();
+    const entry = {
+      id: Date.now(),
+      savedAt: new Date().toISOString(),
+      clientName: state.clientName,
+      issueDate: state.issueDate,
+      receiptNo: state.receiptNo,
+      total: total,
+      snapshot: JSON.parse(JSON.stringify(state))
+    };
+    // 同じidの重複を除去して先頭に追加
+    const filtered = list.filter(h=>h.id !== entry.id);
+    filtered.unshift(entry);
+    saveHistory(filtered.slice(0, HISTORY_MAX));
+  }
+
+  function renderHistoryList(){
+    const list = loadHistory();
+    const listEl = el("historyList");
+    const emptyEl = el("historyEmpty");
+    listEl.innerHTML = "";
+    if(list.length === 0){
+      emptyEl.style.display = "";
+      return;
+    }
+    emptyEl.style.display = "none";
+    list.forEach(h=>{
+      const item = document.createElement("div");
+      item.className = "history-item";
+      const savedAt = new Date(h.savedAt);
+      const dateStr = `${savedAt.getFullYear()}/${String(savedAt.getMonth()+1).padStart(2,"0")}/${String(savedAt.getDate()).padStart(2,"0")}`;
+      item.innerHTML = `
+        <div class="history-item-body">
+          <div class="history-item-client">${escapeHtml(h.clientName || "(宛名なし)")}</div>
+          <div class="history-item-meta">${escapeHtml(h.receiptNo || "")} ${h.issueDate ? escapeHtml(formatDateJp(h.issueDate)) : ""}<br>保存: ${dateStr}</div>
+        </div>
+        <div class="history-item-amount">¥${yen(h.total)}</div>
+        <button class="history-item-del" data-hid="${h.id}" title="履歴から削除">×</button>
+      `;
+      item.querySelector(".history-item-body").addEventListener("click", ()=>{
+        restoreFromHistory(h);
+      });
+      item.querySelector(".history-item-del").addEventListener("click", async e=>{
+        e.stopPropagation();
+        if(!await showConfirm("この履歴を削除しますか?")) return;
+        const updated = loadHistory().filter(x=>x.id !== h.id);
+        saveHistory(updated);
+        renderHistoryList();
+      });
+      listEl.appendChild(item);
+    });
+  }
+
+  function restoreFromHistory(h){
+    state = Object.assign({
+      sealType:"text", sealImageData:""
+    }, JSON.parse(JSON.stringify(h.snapshot)));
+    populateFormFromState();
+    renderAll();
+    saveAll();
+    closeHistory();
+    if(window.innerWidth <= 900){ activateTab("form"); }
+  }
+
+  function openHistory(){
+    renderHistoryList();
+    el("historyOverlay").style.display = "";
+    el("historyPanel").classList.add("open");
+  }
+  function closeHistory(){
+    el("historyPanel").classList.remove("open");
+    setTimeout(()=>{ el("historyOverlay").style.display = "none"; }, 280);
+  }
+  el("historyBtn").addEventListener("click", openHistory);
+  el("historyCloseBtn").addEventListener("click", closeHistory);
+  el("historyOverlay").addEventListener("click", closeHistory);
 
   itemsContainer.addEventListener("input", e=>{
     const idx = e.target.getAttribute("data-idx");
@@ -940,8 +1356,25 @@
     if(last){ last.querySelector('input[data-field="name"]').focus(); }
   });
 
-  el("resetBtn").addEventListener("click", ()=>{
-    if(!confirm("入力内容をすべてクリアします。よろしいですか?(発行者情報は保持されます)")) return;
+  // ---------- カスタム確認ダイアログ ----------
+  function showConfirm(message){
+    return new Promise((resolve)=>{
+      el("confirmMsg").textContent = message;
+      el("confirmOverlay").style.display = "flex";
+      el("confirmOk").focus();
+      function cleanup(result){
+        el("confirmOverlay").style.display = "none";
+        el("confirmOk").onclick = null;
+        el("confirmCancel").onclick = null;
+        resolve(result);
+      }
+      el("confirmOk").onclick = ()=>cleanup(true);
+      el("confirmCancel").onclick = ()=>cleanup(false);
+    });
+  }
+
+  el("resetBtn").addEventListener("click", async ()=>{
+    if(!await showConfirm("入力内容をすべてクリアします。\nよろしいですか?\n(発行者情報は保持されます)")) return;
     const keepIssuer = {
       issuerName: state.issuerName,
       issuerAddr: state.issuerAddr,
@@ -953,9 +1386,10 @@
       issueDate: todayLocalIso(),
       receiptNo:"",
       items:[{name:"",price:"",qty:"1"}],
-      taxRate:"10",
+      taxRate:"10_ex",
       purpose:"",
       showSeal:true,
+      sealType:"text", sealImageData:"",
       ...keepIssuer
     };
     populateFormFromState();
@@ -963,7 +1397,23 @@
     saveAll();
   });
 
+  // ---------- 領収証番号の自動採番 ----------
+  // "No.0001", "0042", "A-0005", "2026-001" など末尾の数字列を+1する。
+  // 数字が見つからない場合は末尾に "-2" を付与する。
+  function incrementReceiptNo(current){
+    if(!current || !current.trim()) return "No.0001";
+    const match = current.match(/^(.*?)(\d+)(\D*)$/);
+    if(!match) return current + "-2";
+    const prefix = match[1];
+    const numStr = match[2];
+    const suffix = match[3];
+    const nextNum = parseInt(numStr, 10) + 1;
+    const paddedNum = String(nextNum).padStart(numStr.length, "0");
+    return prefix + paddedNum + suffix;
+  }
+
   el("newReceiptBtn").addEventListener("click", ()=>{
+    const prevReceiptNo = state.receiptNo;
     const keepIssuer = {
       issuerName: state.issuerName,
       issuerAddr: state.issuerAddr,
@@ -973,11 +1423,12 @@
     state = {
       clientName:"",
       issueDate: todayLocalIso(),
-      receiptNo:"",
+      receiptNo: incrementReceiptNo(prevReceiptNo),
       items:[{name:"",price:"",qty:"1"}],
-      taxRate:"10",
+      taxRate:"10_ex",
       purpose:"",
       showSeal:true,
+      sealType:"text", sealImageData:"",
       ...keepIssuer
     };
     populateFormFromState();
@@ -1035,8 +1486,8 @@
         }
         const merged = {
           clientName:"", issueDate: todayLocalIso(), receiptNo:"",
-          items:[{name:"",price:"",qty:"1"}], taxRate:"10", purpose:"",
-          issuerName:"", issuerAddr:"", issuerTel:"", issuerReg:"", showSeal:true,
+          items:[{name:"",price:"",qty:"1"}], taxRate:"10_ex", purpose:"",
+          issuerName:"", issuerAddr:"", issuerTel:"", issuerReg:"", showSeal:true, sealType:"text", sealImageData:"",
           ...incoming
         };
         if(!Array.isArray(merged.items) || !merged.items.length){
@@ -1083,15 +1534,25 @@
   window.addEventListener("resize", applyResponsiveDefault);
 
   // ---------- zoom ----------
+  const ZOOM_KEY = "receiptMaker_zoom_v1";
   function applyZoom(){
     el("receiptScaleWrap").style.transform = `scale(${zoom})`;
     el("receiptScaleWrap").style.transformOrigin = "top center";
+    try{ localStorage.setItem(ZOOM_KEY, String(zoom)); }catch(e){}
   }
-  el("zoomIn").addEventListener("click", ()=>{ zoom = Math.min(1.4, zoom+0.1); applyZoom(); });
-  el("zoomOut").addEventListener("click", ()=>{ zoom = Math.max(0.5, zoom-0.1); applyZoom(); });
+  (function loadZoom(){
+    try{
+      const v = parseFloat(localStorage.getItem(ZOOM_KEY));
+      if(!isNaN(v) && v >= 0.5 && v <= 1.4){ zoom = v; }
+    }catch(e){}
+  })();
+  el("zoomIn").addEventListener("click", ()=>{ zoom = Math.min(1.4, parseFloat((zoom+0.1).toFixed(1))); applyZoom(); });
+  el("zoomOut").addEventListener("click", ()=>{ zoom = Math.max(0.5, parseFloat((zoom-0.1).toFixed(1))); applyZoom(); });
+  applyZoom();
 
   // ---------- PDF export (ブラウザの印刷機能を利用) ----------
   el("pdfBtn").addEventListener("click", ()=>{
+    pushHistory(); // 履歴に記録
     printReceipt();
   });
 
@@ -1138,12 +1599,57 @@
   renderAll();
   flashSaved();
 
-  // ---------- PWA: service worker registration ----------
+  // ---------- PWA: service worker registration & update detection ----------
   if("serviceWorker" in navigator){
-    window.addEventListener("load", ()=>{
-      navigator.serviceWorker.register("service-worker.js").catch(err=>{
+    window.addEventListener("load", async ()=>{
+      let reg;
+      try{
+        reg = await navigator.serviceWorker.register("service-worker.js");
+      } catch(err){
         console.warn("Service worker registration failed:", err);
+        return;
+      }
+
+      // 新しいSWがインストール済みで待機中(waiting)になっていたらバナーを表示
+      function showUpdateBanner(worker){
+        const banner = el("updateBanner");
+        banner.style.display = "flex";
+
+        el("updateNowBtn").onclick = ()=>{
+          // SWに「今すぐ有効化して」と伝える
+          worker.postMessage({type:"SKIP_WAITING"});
+        };
+        el("updateLaterBtn").onclick = ()=>{
+          banner.style.display = "none";
+        };
+      }
+
+      // すでに waiting 中のSWがあればすぐ表示
+      if(reg.waiting){
+        showUpdateBanner(reg.waiting);
+      }
+
+      // 新しいSWがインストールを完了してwaitingになったタイミングで表示
+      reg.addEventListener("updatefound", ()=>{
+        const newWorker = reg.installing;
+        if(!newWorker) return;
+        newWorker.addEventListener("statechange", ()=>{
+          if(newWorker.state === "installed" && navigator.serviceWorker.controller){
+            showUpdateBanner(newWorker);
+          }
+        });
       });
+
+      // SWが切り替わったらページをリロードして新バージョンを反映
+      let refreshing = false;
+      navigator.serviceWorker.addEventListener("controllerchange", ()=>{
+        if(refreshing) return;
+        refreshing = true;
+        window.location.reload();
+      });
+
+      // バックグラウンドで定期的に更新チェック(30分ごと)
+      setInterval(()=>{ reg.update(); }, 30 * 60 * 1000);
     });
   }
 
