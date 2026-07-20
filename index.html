@@ -944,11 +944,19 @@
     }catch(e){ return null; }
   }
 
+  // 旧バージョンで保存したtaxRate("10","8","0")を新形式に変換する後方互換処理
+  function migrateTaxRate(v){
+    if(v === "10") return "10_ex";
+    if(v === "8")  return "8_ex";
+    return v || "10_ex";
+  }
+
   (function initState(){
     const issuer = loadIssuer();
     const draft = loadDraft();
     if(draft){
       state = Object.assign(state, draft);
+      state.taxRate = migrateTaxRate(state.taxRate); // 後方互換
       if(!state.items || !state.items.length){
         state.items = [{name:"",price:"",qty:"1"}];
       }
@@ -1493,6 +1501,7 @@
         if(!Array.isArray(merged.items) || !merged.items.length){
           merged.items = [{name:"",price:"",qty:"1"}];
         }
+        merged.taxRate = migrateTaxRate(merged.taxRate); // 後方互換
         state = merged;
         populateFormFromState();
         renderAll();
