@@ -14,6 +14,8 @@
 <title>領収証メーカー</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=Zen+Kaku+Gothic+New:wght@500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
 <style>
   :root{
@@ -221,15 +223,40 @@
     font-size:13px;
     padding:11px 10px;
   }
-  .pdf-hint{
+  .pdf-guide{
     font-size:11.5px;
     color:var(--muted);
-    line-height:1.5;
+    line-height:1.6;
     margin:8px 2px 0;
+    padding:10px 12px;
+    background:var(--paper);
+    border-radius:8px;
+    border-left:3px solid var(--navy-2);
+    display:none; /* JS で表示 */
   }
-  .pdf-hint strong{
-    color:var(--navy-2);
+  .pdf-guide strong{color:var(--navy-2);}
+  .pdf-guide.visible{display:block;}
+  .pdf-guide .guide-step{
+    margin:3px 0;
+    padding-left:1em;
+    text-indent:-1em;
   }
+  .btn-dl{
+    flex:1;
+    border:2px solid var(--navy);
+    border-radius:9px;
+    background:var(--white);
+    color:var(--navy);
+    font-size:14px;font-weight:700;
+    font-family:'Noto Sans JP',sans-serif;
+    padding:11px 16px;
+    cursor:pointer;
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    transition:background .15s, color .15s;
+  }
+  .btn-dl:hover{background:var(--navy);color:var(--white);}
+  .btn-dl:disabled{opacity:0.5;cursor:not-allowed;}
+  .btn-dl.loading{opacity:0.7;cursor:wait;}
   .btn{
     flex:1;
     border:none;border-radius:9px;
@@ -810,9 +837,12 @@
 
       <div class="actions">
         <button class="btn btn-ghost" id="resetBtn">クリア</button>
-        <button class="btn btn-primary" id="pdfBtn">PDFで保存</button>
+        <button class="btn btn-primary" id="pdfBtn">🖨 印刷でPDF保存</button>
       </div>
-      <p class="pdf-hint">印刷画面が開きます。「プリンター」または「送信先」の項目で<strong>「PDFに保存」</strong>を選んで保存してください。</p>
+      <div class="actions" style="margin-top:8px;">
+        <button class="btn btn-dl" id="dlBtn">⬇ PDFをダウンロード</button>
+      </div>
+      <div id="pdfGuide" class="pdf-guide"></div>
       <div class="actions actions-file">
         <button class="btn btn-ghost" id="saveFileBtn">📁 ファイルに保存</button>
         <button class="btn btn-ghost" id="loadFileBtn">📂 ファイルを開く</button>
@@ -1560,10 +1590,134 @@
   applyZoom();
 
   // ---------- PDF export (ブラウザの印刷機能を利用) ----------
+  // ---------- デバイス判定 ----------
+  function detectDevice(){
+    const ua = navigator.userAgent;
+    const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+    const isAndroid = /Android/.test(ua);
+    const isStandalone = window.matchMedia("(display-mode: standalone)").matches
+      || ("standalone" in navigator && navigator.standalone);
+    return {isIOS, isAndroid, isStandalone, isMobile: isIOS || isAndroid};
+  }
+
+  // ---------- 印刷ガイド ----------
+  const GUIDE_TEXTS = {
+    ios_browser: [
+      "① 下の「共有」ボタン(□↑)をタップ",
+      "② 「プリント」を選択",
+      "③ プレビュー画面で2本指でピンチアウト(広げる)",
+      "④ 右上の共有ボタンから「ファイルに保存」"
+    ],
+    ios_pwa: [
+      "① 画面を長押し → 「共有」または下部メニューから「印刷」",
+      "② プレビュー画面で2本指でピンチアウト(広げる)",
+      "③ 右上の共有ボタンから「ファイルに保存」",
+      "💡 うまくいかない場合は「PDFをダウンロード」ボタンをお試しください"
+    ],
+    android: [
+      "① 印刷プレビューが開きます",
+      "② 上部または右上の「PDFとして保存」アイコン(↓)をタップ",
+      "③ 保存先を選んで保存"
+    ],
+    pc: [
+      "① 印刷ダイアログが開きます",
+      "② 「プリンター / 送信先」を <strong>「PDFに保存」</strong> に変更",
+      "③ 「保存」をクリック"
+    ]
+  };
+
+  function showPrintGuide(){
+    const {isIOS, isAndroid, isStandalone} = detectDevice();
+    let key = "pc";
+    if(isIOS) key = isStandalone ? "ios_pwa" : "ios_browser";
+    else if(isAndroid) key = "android";
+    const steps = GUIDE_TEXTS[key];
+    const guideEl = el("pdfGuide");
+    guideEl.innerHTML = steps.map(s=>`<div class="guide-step">${s}</div>`).join("");
+    guideEl.classList.add("visible");
+  }
+
   el("pdfBtn").addEventListener("click", ()=>{
-    pushHistory(); // 履歴に記録
+    pushHistory();
+    showPrintGuide();
     printReceipt();
   });
+
+  // ---------- jsPDF ダウンロード ----------
+  el("dlBtn").addEventListener("click", async ()=>{
+    const btn = el("dlBtn");
+    btn.disabled = true;
+    btn.classList.add("loading");
+    const orig = btn.textContent;
+    btn.textContent = "PDF生成中…";
+    try{
+      pushHistory();
+      await downloadPdf();
+    } catch(err){
+      console.error("PDF download error:", err);
+      alert("PDFの生成に失敗しました。\n「印刷でPDF保存」ボタンをお試しください。");
+    } finally {
+      btn.disabled = false;
+      btn.classList.remove("loading");
+      btn.textContent = orig;
+    }
+  });
+
+  async function downloadPdf(){
+    if(!window.jspdf || !window.html2canvas){
+      throw new Error("ライブラリが読み込まれていません");
+    }
+    const { jsPDF } = window.jspdf;
+    const node = el("receipt");
+    const wrap = el("receiptScaleWrap");
+    const previewPanel = el("panelPreview");
+
+    // モバイルでプレビューが hidden-mobile(display:none)の場合、
+    // オフスクリーンに一時表示してからキャプチャする
+    const wasHidden = previewPanel.classList.contains("hidden-mobile");
+    if(wasHidden){
+      previewPanel.classList.remove("hidden-mobile");
+      previewPanel.style.cssText = "position:fixed;left:-9999px;top:0;width:640px;visibility:visible;z-index:-1;";
+    }
+    const prevTransform = wrap.style.transform;
+    wrap.style.transform = "none";
+
+    // フォント読み込み完了を待つ
+    if(document.fonts?.ready) await document.fonts.ready.catch(()=>{});
+    await new Promise(r=>setTimeout(r, 80));
+
+    let canvas;
+    try{
+      canvas = await window.html2canvas(node, {
+        scale: Math.min(window.devicePixelRatio || 1, 2) * 1.5,
+        backgroundColor: "#ffffff",
+        useCORS: true,
+        logging: false,
+        allowTaint: false
+      });
+    } finally {
+      wrap.style.transform = prevTransform;
+      if(wasHidden){
+        previewPanel.classList.add("hidden-mobile");
+        previewPanel.style.cssText = "";
+      }
+    }
+
+    const imgData = canvas.toDataURL("image/jpeg", 0.95);
+    const pdf = new jsPDF({unit:"pt", format:"a4", compress:true});
+    const pw = pdf.internal.pageSize.getWidth();
+    const ph = pdf.internal.pageSize.getHeight();
+    const margin = 40;
+    const maxW = pw - margin * 2;
+    const maxH = ph - margin * 2;
+    const ratio = canvas.height / canvas.width;
+    let rw = maxW, rh = maxW * ratio;
+    if(rh > maxH){ rh = maxH; rw = maxH / ratio; }
+    const x = (pw - rw) / 2;
+    const y = margin;
+    pdf.addImage(imgData, "JPEG", x, y, rw, rh);
+    pdf.save(buildFileName());
+  }
 
   function printReceipt(){
     // 印刷ダイアログ(PDF保存)でファイル名の候補として使われるよう、タイトルを変更する。
