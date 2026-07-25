@@ -1672,30 +1672,39 @@
     const wrap = el("receiptScaleWrap");
     const previewPanel = el("panelPreview");
 
-    // モバイルでプレビューが hidden-mobile(display:none)の場合、
-    // オフスクリーンに一時表示してからキャプチャする
+    // ① プレビューが hidden-mobile(display:none)の場合はオフスクリーンに一時表示
     const wasHidden = previewPanel.classList.contains("hidden-mobile");
     if(wasHidden){
       previewPanel.classList.remove("hidden-mobile");
-      previewPanel.style.cssText = "position:fixed;left:-9999px;top:0;width:640px;visibility:visible;z-index:-1;";
+      previewPanel.style.cssText = "position:fixed;left:-9999px;top:0;width:660px;visibility:visible;z-index:-1;";
     }
+
+    // ② モバイル用CSSで縮んでいる #receipt を強制的に600px固定幅に戻す
+    //    (スマホでもPCと同じレイアウトでキャプチャするため)
     const prevTransform = wrap.style.transform;
     wrap.style.transform = "none";
+    const prevNodeStyle = node.getAttribute("style") || "";
+    node.style.cssText = "width:600px !important; max-width:600px !important; padding:40px 48px 36px !important;";
 
-    // フォント読み込み完了を待つ
+    // フォント・レイアウト確定を待つ
     if(document.fonts?.ready) await document.fonts.ready.catch(()=>{});
-    await new Promise(r=>setTimeout(r, 80));
+    await new Promise(r=>setTimeout(r, 120));
 
     let canvas;
     try{
       canvas = await window.html2canvas(node, {
-        scale: Math.min(window.devicePixelRatio || 1, 2) * 1.5,
+        scale: 2.5,              // 常に固定倍率でキャプチャ(端末に依存しない高品質)
         backgroundColor: "#ffffff",
         useCORS: true,
         logging: false,
-        allowTaint: false
+        allowTaint: false,
+        width: 600,              // キャプチャ幅を600pxに固定
+        windowWidth: 1200        // デスクトップ幅として認識させ、モバイル用CSSが当たらないようにする
       });
     } finally {
+      // ③ スタイルを元に戻す
+      node.setAttribute("style", prevNodeStyle);
+      if(!prevNodeStyle) node.removeAttribute("style");
       wrap.style.transform = prevTransform;
       if(wasHidden){
         previewPanel.classList.add("hidden-mobile");
