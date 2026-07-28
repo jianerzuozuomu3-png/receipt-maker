@@ -223,24 +223,72 @@
     font-size:13px;
     padding:11px 10px;
   }
-  .pdf-guide{
-    font-size:11.5px;
-    color:var(--muted);
-    line-height:1.6;
-    margin:8px 2px 0;
-    padding:10px 12px;
+  /* ---------- 印刷ガイドポップアップ ---------- */
+  #printGuideOverlay{
+    position:fixed;inset:0;
+    background:rgba(28,43,54,0.55);
+    display:flex;align-items:center;justify-content:center;
+    z-index:10000;
+    padding:20px;
+  }
+  #printGuideBox{
+    background:var(--white);
+    border-radius:16px;
+    padding:0;
+    max-width:400px;width:100%;
+    box-shadow:0 24px 48px -12px rgba(28,43,54,0.45);
+    overflow:hidden;
+  }
+  #printGuideHeader{
+    background:var(--navy);
+    color:#fff;
+    padding:16px 20px;
+    display:flex;align-items:center;justify-content:space-between;
+  }
+  #printGuideTitle{
+    font-family:'Noto Serif JP',serif;
+    font-size:15px;font-weight:700;letter-spacing:0.05em;
+  }
+  #printGuideCloseBtn{
+    background:none;border:none;color:rgba(255,255,255,0.7);
+    font-size:18px;cursor:pointer;line-height:1;
+    width:28px;height:28px;display:flex;align-items:center;justify-content:center;
+    border-radius:6px;
+  }
+  #printGuideCloseBtn:hover{color:#fff;background:rgba(255,255,255,0.15);}
+  #printGuideDevice{
+    font-size:12px;color:var(--muted);
+    padding:12px 20px 0;
+    letter-spacing:0.03em;
+  }
+  #printGuideSteps{
+    margin:10px 20px 0;
+    padding-left:1.5em;
+    list-style:decimal;
+  }
+  #printGuideSteps li{
+    font-size:13.5px;line-height:1.65;
+    color:var(--ink);
+    padding:4px 0;
+    border-bottom:1px solid var(--line);
+  }
+  #printGuideSteps li:last-child{border-bottom:none;}
+  #printGuideSteps strong{color:var(--navy);}
+  #printGuideNote{
+    font-size:11.5px;color:var(--muted);
     background:var(--paper);
+    margin:12px 20px 0;
+    padding:10px 12px;
     border-radius:8px;
-    border-left:3px solid var(--navy-2);
-    display:none; /* JS で表示 */
+    line-height:1.6;
+    display:none;
   }
-  .pdf-guide strong{color:var(--navy-2);}
-  .pdf-guide.visible{display:block;}
-  .pdf-guide .guide-step{
-    margin:3px 0;
-    padding-left:1em;
-    text-indent:-1em;
+  #printGuideNote.visible{display:block;}
+  #printGuideBtns{
+    display:flex;gap:10px;
+    padding:16px 20px 20px;
   }
+  #printGuideBtns .btn{flex:1;padding:12px;}
   .btn-dl{
     flex:1;
     border:2px solid var(--navy);
@@ -718,6 +766,23 @@
     </div>
   </div>
 </div>
+
+<!-- 印刷ガイドポップアップ -->
+<div id="printGuideOverlay" role="dialog" aria-modal="true" aria-labelledby="printGuideTitle" style="display:none;">
+  <div id="printGuideBox">
+    <div id="printGuideHeader">
+      <span id="printGuideTitle">PDFの保存方法</span>
+      <button id="printGuideCloseBtn" aria-label="閉じる">✕</button>
+    </div>
+    <div id="printGuideDevice"></div>
+    <ol id="printGuideSteps"></ol>
+    <div id="printGuideNote"></div>
+    <div id="printGuideBtns">
+      <button id="printGuideCancelBtn" class="btn btn-ghost">キャンセル</button>
+      <button id="printGuideOkBtn" class="btn btn-primary">印刷画面を開く</button>
+    </div>
+  </div>
+</div>
 <!-- 履歴パネル -->
 <div id="historyOverlay" style="display:none;"></div>
 <div id="historyPanel" aria-label="領収証履歴">
@@ -842,7 +907,6 @@
       <div class="actions" style="margin-top:8px;">
         <button class="btn btn-dl" id="dlBtn">⬇ PDFをダウンロード</button>
       </div>
-      <div id="pdfGuide" class="pdf-guide"></div>
       <div class="actions actions-file">
         <button class="btn btn-ghost" id="saveFileBtn">📁 ファイルに保存</button>
         <button class="btn btn-ghost" id="loadFileBtn">📂 ファイルを開く</button>
@@ -1600,47 +1664,87 @@
     return {isIOS, isAndroid, isStandalone, isMobile: isIOS || isAndroid};
   }
 
-  // ---------- 印刷ガイド ----------
-  const GUIDE_TEXTS = {
-    ios_browser: [
-      "① 下の「共有」ボタン(□↑)をタップ",
-      "② 「プリント」を選択",
-      "③ プレビュー画面で2本指でピンチアウト(広げる)",
-      "④ 右上の共有ボタンから「ファイルに保存」"
-    ],
-    ios_pwa: [
-      "① 画面を長押し → 「共有」または下部メニューから「印刷」",
-      "② プレビュー画面で2本指でピンチアウト(広げる)",
-      "③ 右上の共有ボタンから「ファイルに保存」",
-      "💡 うまくいかない場合は「PDFをダウンロード」ボタンをお試しください"
-    ],
-    android: [
-      "① 印刷プレビューが開きます",
-      "② 上部または右上の「PDFとして保存」アイコン(↓)をタップ",
-      "③ 保存先を選んで保存"
-    ],
-    pc: [
-      "① 印刷ダイアログが開きます",
-      "② 「プリンター / 送信先」を <strong>「PDFに保存」</strong> に変更",
-      "③ 「保存」をクリック"
-    ]
+  // ---------- 印刷ガイドポップアップ ----------
+  const GUIDE_DATA = {
+    ios_browser: {
+      device: "📱 iPhone / iPad（Safari）",
+      steps: [
+        "画面下部の <strong>「共有」ボタン（□↑）</strong> をタップ",
+        "メニューから <strong>「プリント」</strong> を選択",
+        "印刷プレビュー画面で <strong>2本指でピンチアウト（広げる）</strong>",
+        "PDFプレビューが開いたら、右上の <strong>共有ボタン → 「ファイルに保存」</strong>"
+      ],
+      note: "💡 手順が複雑な場合は「⬇ PDFをダウンロード」ボタンもお試しください。"
+    },
+    ios_pwa: {
+      device: "📱 iPhone / iPad（ホーム画面アプリ）",
+      steps: [
+        "画面を長押し、または下部メニューから <strong>「印刷」</strong> を選択",
+        "印刷プレビュー画面で <strong>2本指でピンチアウト（広げる）</strong>",
+        "PDFプレビューが開いたら、右上の <strong>共有ボタン → 「ファイルに保存」</strong>"
+      ],
+      note: "💡 うまくいかない場合は「⬇ PDFをダウンロード」ボタンをお試しください。"
+    },
+    android: {
+      device: "🤖 Android（Chrome）",
+      steps: [
+        "印刷プレビュー画面が開きます",
+        "画面上部またはドロップダウンから <strong>「PDFとして保存」</strong> を選択",
+        "保存先フォルダを選んで <strong>「保存」</strong> をタップ"
+      ],
+      note: null
+    },
+    pc: {
+      device: "💻 パソコン（Chrome / Edge / Firefox / Safari）",
+      steps: [
+        "印刷ダイアログが開きます",
+        "「プリンター」または「送信先」の項目を <strong>「PDFに保存」</strong> に変更",
+        "<strong>「保存」</strong> をクリックしてファイルを保存"
+      ],
+      note: null
+    }
   };
 
-  function showPrintGuide(){
-    const {isIOS, isAndroid, isStandalone} = detectDevice();
-    let key = "pc";
-    if(isIOS) key = isStandalone ? "ios_pwa" : "ios_browser";
-    else if(isAndroid) key = "android";
-    const steps = GUIDE_TEXTS[key];
-    const guideEl = el("pdfGuide");
-    guideEl.innerHTML = steps.map(s=>`<div class="guide-step">${s}</div>`).join("");
-    guideEl.classList.add("visible");
+  // ポップアップを表示し、ユーザーが「印刷画面を開く」を押したらresolve(true)、
+  // キャンセル/✕ならresolve(false)を返すPromise
+  function showPrintGuidePopup(){
+    return new Promise((resolve)=>{
+      const {isIOS, isAndroid, isStandalone} = detectDevice();
+      let key = "pc";
+      if(isIOS) key = isStandalone ? "ios_pwa" : "ios_browser";
+      else if(isAndroid) key = "android";
+      const data = GUIDE_DATA[key];
+
+      el("printGuideDevice").textContent = data.device;
+      el("printGuideSteps").innerHTML = data.steps.map(s=>`<li>${s}</li>`).join("");
+      const noteEl = el("printGuideNote");
+      if(data.note){
+        noteEl.textContent = data.note;
+        noteEl.classList.add("visible");
+      } else {
+        noteEl.textContent = "";
+        noteEl.classList.remove("visible");
+      }
+      el("printGuideOverlay").style.display = "flex";
+      el("printGuideOkBtn").focus();
+
+      function cleanup(result){
+        el("printGuideOverlay").style.display = "none";
+        el("printGuideOkBtn").onclick = null;
+        el("printGuideCancelBtn").onclick = null;
+        el("printGuideCloseBtn").onclick = null;
+        resolve(result);
+      }
+      el("printGuideOkBtn").onclick = ()=>cleanup(true);
+      el("printGuideCancelBtn").onclick = ()=>cleanup(false);
+      el("printGuideCloseBtn").onclick = ()=>cleanup(false);
+    });
   }
 
-  el("pdfBtn").addEventListener("click", ()=>{
+  el("pdfBtn").addEventListener("click", async ()=>{
     pushHistory();
-    showPrintGuide();
-    printReceipt();
+    const confirmed = await showPrintGuidePopup();
+    if(confirmed) printReceipt();
   });
 
   // ---------- jsPDF ダウンロード ----------
