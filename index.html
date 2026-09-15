@@ -862,9 +862,13 @@
         <label for="issuerName">発行者名</label>
         <input id="issuerName" type="text" placeholder="株式会社サンプル / 山田商店">
       </div>
+      <div class="field" style="max-width:180px;">
+        <label for="issuerZip">郵便番号</label>
+        <input id="issuerZip" type="text" placeholder="100-0001" inputmode="numeric" maxlength="8">
+      </div>
       <div class="field">
         <label for="issuerAddr">住所</label>
-        <textarea id="issuerAddr" rows="2" placeholder="〒100-0001 東京都千代田区..."></textarea>
+        <textarea id="issuerAddr" rows="2" placeholder="東京都千代田区..."></textarea>
       </div>
       <div class="row2">
         <div class="field">
@@ -993,6 +997,7 @@
     taxRate:"10_ex",
     purpose:"",
     issuerName:"",
+    issuerZip:"",
     issuerAddr:"",
     issuerTel:"",
     issuerReg:"",
@@ -1059,6 +1064,7 @@
     // 下書きに値があり専用ストアが空なら下書きの値を使う。
     if(issuer){
       state.issuerName = issuer.issuerName || state.issuerName || "";
+      state.issuerZip  = issuer.issuerZip  || state.issuerZip  || "";
       state.issuerAddr = issuer.issuerAddr || state.issuerAddr || "";
       state.issuerTel  = issuer.issuerTel  || state.issuerTel  || "";
       state.issuerReg  = issuer.issuerReg  || state.issuerReg  || "";
@@ -1071,6 +1077,7 @@
       localStorage.setItem(DRAFT_KEY, JSON.stringify(state));
       localStorage.setItem(ISSUER_KEY, JSON.stringify({
         issuerName:state.issuerName,
+        issuerZip:state.issuerZip,
         issuerAddr:state.issuerAddr,
         issuerTel:state.issuerTel,
         issuerReg:state.issuerReg
@@ -1120,6 +1127,7 @@
     el("taxRate").value = state.taxRate;
     el("purpose").value = state.purpose;
     el("issuerName").value = state.issuerName;
+    el("issuerZip").value = state.issuerZip;
     el("issuerAddr").value = state.issuerAddr;
     el("issuerTel").value = state.issuerTel;
     el("issuerReg").value = state.issuerReg;
@@ -1225,6 +1233,7 @@
 
     const issuerDiv = el("pvIssuer");
     let issuerHtml = `<span class="name">${escapeHtml(state.issuerName) || "　"}</span>`;
+    if(state.issuerZip) issuerHtml += `〒${escapeHtml(state.issuerZip)}<br>`;
     if(state.issuerAddr) issuerHtml += escapeHtml(state.issuerAddr).replace(/\n/g,"<br>") + "<br>";
     if(state.issuerTel) issuerHtml += `TEL: ${escapeHtml(state.issuerTel)}`;
     issuerDiv.innerHTML = issuerHtml;
@@ -1278,6 +1287,7 @@
   bindSimpleField("taxRate","taxRate");
   bindSimpleField("purpose","purpose");
   bindSimpleField("issuerName","issuerName");
+  bindSimpleField("issuerZip","issuerZip");
   bindSimpleField("issuerAddr","issuerAddr");
   bindSimpleField("issuerTel","issuerTel");
   bindSimpleField("issuerReg","issuerReg");
@@ -1479,6 +1489,7 @@
     if(!await showConfirm("入力内容をすべてクリアします。\nよろしいですか?\n(発行者情報は保持されます)")) return;
     const keepIssuer = {
       issuerName: state.issuerName,
+      issuerZip: state.issuerZip,
       issuerAddr: state.issuerAddr,
       issuerTel: state.issuerTel,
       issuerReg: state.issuerReg
@@ -1518,6 +1529,7 @@
     const prevReceiptNo = state.receiptNo;
     const keepIssuer = {
       issuerName: state.issuerName,
+      issuerZip: state.issuerZip,
       issuerAddr: state.issuerAddr,
       issuerTel: state.issuerTel,
       issuerReg: state.issuerReg
@@ -1589,7 +1601,7 @@
         const merged = {
           clientName:"", issueDate: todayLocalIso(), receiptNo:"",
           items:[{name:"",price:"",qty:"1"}], taxRate:"10_ex", purpose:"",
-          issuerName:"", issuerAddr:"", issuerTel:"", issuerReg:"", showSeal:true, sealType:"text", sealImageData:"",
+          issuerName:"", issuerZip:"", issuerAddr:"", issuerTel:"", issuerReg:"", showSeal:true, sealType:"text", sealImageData:"",
           ...incoming
         };
         if(!Array.isArray(merged.items) || !merged.items.length){
